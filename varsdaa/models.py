@@ -120,7 +120,7 @@ class Registration(Model):
     identifier = CharField(max_length=255)
     user = ForeignKey(to=User, on_delete=models.CASCADE)
     office = ForeignKey(to=Office, on_delete=models.CASCADE)
-    desk = ForeignKey(to=Desk, on_delete=models.CASCADE)
+    desk = ForeignKey(to=Desk, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"Registration #{self.pk}"

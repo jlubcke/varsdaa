@@ -1,6 +1,7 @@
+from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.template import Template
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from iommi import LAST
@@ -14,25 +15,20 @@ from varsdaa.iommi import Table
 from varsdaa.map import Map
 from varsdaa.models import Desk
 from varsdaa.models import Floor
+from varsdaa.models import Office
+from varsdaa.models import Registration
 from varsdaa.models import Room
 from varsdaa.models import User
 
 
 def index(request):
     return Page(
-        parts__hello=Template(
-            # language=html
-            """
-                {% load socialaccount %}
-                <il>
-                    <li>
-                        <a href="{% provider_login_url "google" next="/who" %}">Login with google</a>
-                    </li>
-                    <li>
-                        <a href="/admin/">Admin login</a>
-                    </li>
-                </il>
-            """,
+        parts__headin=html.h1("Varsdå?"),
+        parts__login_google=html.a(
+            "login",
+            attrs__href=lambda request, **_: get_adapter()
+            .get_provider(request, "google")
+            .get_login_url(request, next="/person/me/"),
         ),
     )
 
@@ -41,13 +37,15 @@ def desks_for_persons(persons):
     result = []
     for p in persons:
         for r in p.registration_set.all():
-            result.append(r.desk)
+            if r.desk:
+                result.append(r.desk)
     return result
 
 
 def desk_pk_for_person(person):
     for r in person.registration_set.all():
-        return r.desk.pk
+        if r.desk:
+            return r.desk.pk
     return None
 
 
@@ -116,8 +114,23 @@ def who(request):
     )
 
 
+def me(request):
+    return HttpResponseRedirect(request.user.get_absolute_url())
+
+
 def who_details(request, email):
     instance = get_object_or_404(User, email=email)
+
+    def office_post_handler(form, **kwargs):
+        Registration.objects.filter(user=request.user).delete()
+        office = form.fields.office.value
+        if office:
+            Registration.objects.create(
+                user=request.user,
+                office=office,
+            )
+        return HttpResponseRedirect('.')
+
     return Page(
         parts__heading=html.h1(instance.name or instance.email),
         parts__avatar=html.div(
@@ -132,7 +145,16 @@ def who_details(request, email):
             auto__instance=instance,
             auto__include=["email"],
         ),
+        parts__location=Form(
+            actions__submit__post_handler=office_post_handler,
+            include=lambda request, **_: instance == request.user,
+            fields__office=Field.choice_queryset(
+                choices=Office.objects.all(),
+                initial=lambda **_: r.first().office if (r:=instance.registration_set) else None,
+            ),
+        ),
     )
+
 
 def register(request, email, identifier):
     pass
@@ -195,7 +217,7 @@ class ShowRoomForm(RoomForm):
 
 class ShowRoom(Page):
     form = ShowRoomForm()
-    edit_link=html.a("Edit", attrs__href='edit/')
+    edit_link = html.a("Edit", attrs__href="edit/")
 
 
 class DeskForm(Form):

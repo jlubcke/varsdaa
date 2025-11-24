@@ -17,6 +17,7 @@ urlpatterns = [
     path("room/<int:room_pk>/edit/", EditRoom().as_view(), name="room_edit"),
 
     path("person/", views.who, name="who"),
+    path("person/me/", views.me, name="me"),
     path("person/<email>/", views.who_details, name="who_details"),
 
     path("desk/<int:desk_pk>/", DeskShow().as_view(), name="desk_show"),

@@ -16,13 +16,6 @@ from varsdaa.managers import UserManager
 
 
 class User(AbstractUser):
-    """
-    Default custom user model for OfficeMap.
-    If adding fields that need to be filled at user signup,
-    check forms.SignupForm and forms.SocialSignupForms accordingly.
-    """
-
-    # First and last name do not cover name patterns around the globe
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
@@ -35,7 +28,7 @@ class User(AbstractUser):
     objects: ClassVar[UserManager] = UserManager()
 
     def get_absolute_url(self) -> str:
-        return reverse("who_details", kwargs={"pk": self.id})
+        return reverse("who_details", kwargs={"email": self.email})
 
 
 class Office(Model):

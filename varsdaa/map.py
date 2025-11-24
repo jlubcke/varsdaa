@@ -18,7 +18,9 @@ from varsdaa.models import Floor
 from varsdaa.models import Room
 
 
-@with_defaults
+@with_defaults(
+    floors_all=lambda **_: Floor.objects.all().order_by("-display_name")
+)
 class Map(Fragment):
     class Meta:
         assets__map_js = Asset.js(children__content__template="js/map.js")
@@ -40,15 +42,18 @@ class Map(Fragment):
     desks_marked: Iterable[Desk] | None = Refinable()
     rooms_all: Iterable[Room] | None = Refinable()
     rooms_marked: Iterable[Room] | None = Refinable()
+    floors_all: Iterable[Room] | None = Refinable()
+    floors_marked: Iterable[Room] | None = Refinable()
 
     def render_text_or_children(self, context=None):
-        floors = Floor.objects.all().order_by("-display_name")
+        floors_all = evaluate_strict(self.floors_all, **self.iommi_evaluate_parameters()) or []
+        floors_marked = evaluate_strict(self.floors_marked, **self.iommi_evaluate_parameters()) or []
 
         fragments = []
         request = self.get_request()
-        for floor in floors:
+        for floor in floors_all:
             shapes = self._render_desk_shapes(floor) + self._render_room_shapes(floor)
-            if not shapes:
+            if not shapes and floor not in floors_marked:
                 continue
 
             params = params_of_request(request)

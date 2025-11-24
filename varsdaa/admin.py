@@ -21,16 +21,20 @@ class VarsdaaAdmin(Admin):
         parts__list_varsdaa_floor__columns__image = Column.image()
 
         apps__varsdaa_room__include = True
-        apps__varsdaa_desk__include = True
-        apps__varsdaa_registration__include = True
-
         parts__edit_varsdaa_room__fields__map = Map(
+            floors_marked=lambda instance, **_: [instance.floor] if instance.floor else [],
             rooms_all=lambda instance, **_: [instance],
             rooms_marked=lambda instance, **_: [instance],
         )
+
+        apps__varsdaa_desk__include = True
         parts__edit_varsdaa_desk__fields__map = Map(
+            floors_marked=lambda instance, **_: [instance.floor] if instance.floor else [],
             desks_all=lambda instance, **_: [instance],
             desks_marked=lambda instance, **_: [instance],
         )
 
+        apps__varsdaa_registration__include = True
+
         apps__socialaccount_socialapp__include = True
+        apps__socialaccount_socialaccount__include = True

@@ -36,8 +36,8 @@ class MenuItem(iommi.MenuItem):
 
 
 class Menu(iommi.Menu):
-    who = MenuItem(display_name="Vem", url="/who/")
-    where = MenuItem(display_name="Vars", url="/where/")
+    where = MenuItem(display_name="Vars", url="/room/")
+    who = MenuItem(display_name="Vem", url="/person/")
     admin = MenuItem(url="/admin/")
 
 

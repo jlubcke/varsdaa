@@ -4,6 +4,7 @@ from django.template import Template
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from iommi import LAST
+from iommi import html
 
 from varsdaa.iommi import Column
 from varsdaa.iommi import Field
@@ -31,7 +32,7 @@ def index(request):
                         <a href="/admin/">Admin login</a>
                     </li>
                 </il>
-            """
+            """,
         ),
     )
 
@@ -48,37 +49,6 @@ def desk_pk_for_person(person):
     for r in person.registration_set.all():
         return r.desk.pk
     return None
-
-
-class UserTable(Table):
-    class Meta:
-        model = User
-        title = "Users"
-        row__attrs = {
-            "data-desk": lambda row, **_: desk_pk_for_person(row),
-        }
-        container__children__map = Map(
-            desks_all=lambda table, **_: desks_for_persons(table.get_visible_rows()),
-            desks_marked=lambda table, **_: desks_for_persons(table.rows),
-            after=LAST,
-        )
-
-    avatar = Column(
-        cell__value=lambda row, **_: s.get_avatar_url() if (s := row.socialaccount_set.first()) is not None else None,
-        cell__format=lambda value, **_: format_html('<img src="{}" />', value) if value else "",
-    )
-
-    name = Column.from_model(
-        model_field=User.name.field,
-        filter__include=True,
-        filter__freetext=True,
-    )
-
-    email = Column.from_model(
-        model_field=User.email.field,
-        filter__include=True,
-        filter__freetext=True,
-    )
 
 
 class RoomTable(Table):
@@ -104,27 +74,68 @@ class RoomTable(Table):
         )
 
 
-def who(request):
-    return Page(
-        parts__users=UserTable(),
-    )
-
-
-def who_details(request, pk):
-    instance = get_object_or_404(User, pk=pk)
-    return Page(
-        parts__user=Form.edit(
-            editable=False,
-            # auto__model=User,
-            auto__instance=instance,
-        ),
-    )
-
-
 def where(request):
     return Page(
         parts__rooms=RoomTable(),
     )
+
+
+class UserTable(Table):
+    class Meta:
+        model = User
+        title = "Users"
+        row__attrs = {
+            "data-desk": lambda row, **_: desk_pk_for_person(row),
+        }
+        container__children__map = Map(
+            desks_all=lambda table, **_: desks_for_persons(table.get_visible_rows()),
+            desks_marked=lambda table, **_: desks_for_persons(table.rows),
+            after=LAST,
+        )
+
+    avatar = Column(
+        cell__value=lambda row, **_: s.get_avatar_url() if (s := row.socialaccount_set.first()) is not None else None,
+        cell__format=lambda value, **_: format_html('<img src="{}" />', value) if value else "",
+    )
+    email = Column.from_model(
+        model_field=User.email.field,
+        filter__include=True,
+        filter__freetext=True,
+        cell__url=lambda row, **_: row.get_absolute_url(),
+    )
+    name = Column.from_model(
+        model_field=User.name.field,
+        filter__include=True,
+        filter__freetext=True,
+    )
+
+
+def who(request):
+    return Page(
+        parts__users=UserTable(rows=lambda **_: User.objects.filter(is_superuser=False)),
+    )
+
+
+def who_details(request, email):
+    instance = get_object_or_404(User, email=email)
+    return Page(
+        parts__heading=html.h1(instance.name or instance.email),
+        parts__avatar=html.div(
+            lambda **_: format_html(
+                '<img src="{}" />',
+                s.get_avatar_url(),
+            )
+            if (s := instance.socialaccount_set.first()) is not None
+            else None,
+        ),
+        parts__user=Form(
+            auto__instance=instance,
+            auto__include=["email"],
+        ),
+    )
+
+def register(request, email, identifier):
+    pass
 
 
 class FloorForm(Form):
@@ -184,6 +195,7 @@ class ShowRoomForm(RoomForm):
 
 class ShowRoom(Page):
     form = ShowRoomForm()
+    edit_link=html.a("Edit", attrs__href='edit/')
 
 
 class DeskForm(Form):

@@ -23,7 +23,14 @@ def index(request):
             # language=html
             """
                 {% load socialaccount %}
-                <a href="{% provider_login_url "google" next="/who" %}">Login</a>
+                <il>
+                    <li>
+                        <a href="{% provider_login_url "google" next="/who" %}">Login with google</a>
+                    </li>
+                    <li>
+                        <a href="/admin/">Admin login</a>
+                    </li>
+                </il>
             """
         ),
     )

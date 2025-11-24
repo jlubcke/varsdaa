@@ -1,0 +1,23 @@
+[project]
+name = "varsdaa"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=5.2.8",
+    "iommi>=7.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-django>=4.11.1",
+    "pytest-sugar>=1.1.1",
+    "ruff>=0.14.6",
+]
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+varsdaa = "varsdaa"

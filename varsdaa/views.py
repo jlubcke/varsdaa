@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template import Template
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from iommi import LAST
@@ -14,6 +15,18 @@ from varsdaa.models import Desk
 from varsdaa.models import Floor
 from varsdaa.models import Room
 from varsdaa.models import User
+
+
+def index(request):
+    return Page(
+        parts__hello=Template(
+            # language=html
+            """
+                {% load socialaccount %}
+                <a href="{% provider_login_url "google" next="/who" %}">Login</a>
+            """
+        ),
+    )
 
 
 def desks_for_persons(persons):

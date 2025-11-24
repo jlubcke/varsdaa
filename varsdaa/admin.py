@@ -32,3 +32,5 @@ class VarsdaaAdmin(Admin):
             desks_all=lambda instance, **_: [instance],
             desks_marked=lambda instance, **_: [instance],
         )
+
+        apps__socialaccount_socialapp__include = True

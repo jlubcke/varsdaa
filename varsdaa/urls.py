@@ -11,6 +11,7 @@ from varsdaa.views import ShowFloor
 from varsdaa.views import ShowRoom
 
 urlpatterns = [
+    path("", views.index, name="index"),
     path("who/", views.who, name="who"),
     path("who/<int:pk>/", views.who_details, name="who_details"),
     path("desk/<int:desk_pk>/", DeskShow().as_view(), name="desk_show"),

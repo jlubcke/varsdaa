@@ -25,9 +25,8 @@ SECRET_KEY = 'django-insecure-(tqg84&yi*ps-s_m8v--ra5xd2%mj!u!$v2q)^bt@^8pb=6wfl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]  # noqa: S104
 
-AUTH_USER_MODEL = "varsdaa.User"
 
 # Application definition
 
@@ -134,3 +133,26 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+AUTH_USER_MODEL = "varsdaa.User"
+
+# django-allauth
+# ------------------------------------------------------------------------------
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*"]
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+SOCIALACCOUNT_ADAPTER = "varsdaa.adapters.SocialAccountAdapter"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "FETCH_USERINFO": True,
+    },
+}

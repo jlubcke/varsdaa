@@ -14,3 +14,18 @@ up a "Social application" with the values:
 - Name: `google`
 - Client ID: <client_id>
 - Client secret: <client_secret>
+
+Client format
+-------------
+
+
+POST /report_display/
+{
+    "user_name": <user name>,
+    "full_name": <full_name>,
+    "displays": {
+        "product_name": "DELL P3223QE",
+        "serial_number": "892416844",
+        "alphanumeric_serial_number": "8Y064P3"
+    },
+}

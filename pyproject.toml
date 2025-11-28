@@ -23,3 +23,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-dir]
 varsdaa = "varsdaa"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "varsdaa.test.settings"

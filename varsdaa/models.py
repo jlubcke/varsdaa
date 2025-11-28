@@ -1,10 +1,10 @@
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
-
 from django.db import models
 from django.db.models import BinaryField
 from django.db.models import CharField
+from django.db.models import DateTimeField
 from django.db.models import EmailField
 from django.db.models import ForeignKey
 from django.db.models import IntegerField
@@ -29,6 +29,9 @@ class User(AbstractUser):
 
     def get_absolute_url(self) -> str:
         return reverse("who_details", kwargs={"email": self.email})
+
+    office = ForeignKey(to='Office', on_delete=models.CASCADE, null=True)
+    office_updated_at = DateTimeField(auto_now=True)
 
 
 class Office(Model):
@@ -116,17 +119,11 @@ class Desk(Model):
         return f"/desk/{self.pk}/"
 
 
-class Registration(Model):
-    identifier = CharField(max_length=255)
-    user = ForeignKey(to=User, on_delete=models.CASCADE)
-    office = ForeignKey(to=Office, on_delete=models.CASCADE)
+class Display(Model):
     desk = ForeignKey(to=Desk, on_delete=models.CASCADE, null=True)
+    serial_number = CharField(max_length=255)
+    alphanumeric_serial_number = CharField(max_length=255)
+    user = ForeignKey(to=User, on_delete=models.CASCADE, null=True)
+    user_updated_at = DateTimeField()
 
-    def __str__(self):
-        return f"Registration #{self.pk}"
 
-    def __repr__(self):
-        return (
-            f"<Registration pk={self.pk}, identifier={self.identifier!r}, user_id={self.user_id}, "
-            f"office_id={self.office_id}, desk_id={self.desk_id}>"
-        )

@@ -1,6 +1,6 @@
 from iommi.admin import Admin
 
-from varsdaa.iommi import Column
+from varsdaa.iommi import Column, Menu
 from varsdaa.map import Map
 
 
@@ -9,6 +9,7 @@ def fail(x):
 
 
 class VarsdaaAdmin(Admin):
+    menu = Menu()
     class Meta:
         apps__auth_user__include = False
         apps__auth_group__include = False
@@ -34,7 +35,9 @@ class VarsdaaAdmin(Admin):
             desks_marked=lambda instance, **_: [instance],
         )
 
-        apps__varsdaa_registration__include = True
+        apps__varsdaa_display__include = True
+
+        # apps__varsdaa_registration__include = True
 
         apps__socialaccount_socialapp__include = True
         apps__socialaccount_socialaccount__include = True

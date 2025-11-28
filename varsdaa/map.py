@@ -136,7 +136,7 @@ class Map(Fragment):
                             "class": {
                                 "desk": True,
                                 "marked": bool(desk in desks_marked),
-                                "connected": bool(desk.registration_set),
+                                "connected": bool(any(desk.display_set.values_list('user', flat=True))),
                             },
                             "data-desk": desk.pk,
                             "r": 10,

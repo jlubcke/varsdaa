@@ -1,9 +1,13 @@
+import json
+
 from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
 from iommi import LAST
 from iommi import html
 
@@ -16,37 +20,26 @@ from varsdaa.map import Map
 from varsdaa.models import Desk
 from varsdaa.models import Floor
 from varsdaa.models import Office
-from varsdaa.models import Registration
 from varsdaa.models import Room
 from varsdaa.models import User
+from varsdaa.register import handle_report
 
 
 def index(request):
     return Page(
         parts__headin=html.h1("Varsdå?"),
-        parts__login_google=html.a(
-            "login",
-            attrs__href=lambda request, **_: get_adapter()
-            .get_provider(request, "google")
-            .get_login_url(request, next="/person/me/"),
+        parts__choices=html.ul(
+            html.li(
+                html.a(
+                    "Login",
+                    attrs__href=lambda request, **_: get_adapter()
+                    .get_provider(request, "google")
+                    .get_login_url(request, next="/person/me/"),
+                )
+            ),
+            html.li(html.a("Admin", attrs__href=reverse("iommi.Admin.all_models"))),
         ),
     )
-
-
-def desks_for_persons(persons):
-    result = []
-    for p in persons:
-        for r in p.registration_set.all():
-            if r.desk:
-                result.append(r.desk)
-    return result
-
-
-def desk_pk_for_person(person):
-    for r in person.registration_set.all():
-        if r.desk:
-            return r.desk.pk
-    return None
 
 
 class RoomTable(Table):
@@ -78,16 +71,30 @@ def where(request):
     )
 
 
+def desks_for_users(users):
+    result = []
+    for user in users:
+        for d in user.display_set.all():
+            result.append(d.desk)
+    return result
+
+
+def desk_pk_for_user(user):
+    for d in user.display_set.all():
+        return d.desk.pk
+    return None
+
+
 class UserTable(Table):
     class Meta:
         model = User
         title = "Users"
         row__attrs = {
-            "data-desk": lambda row, **_: desk_pk_for_person(row),
+            "data-desk": lambda row, **_: desk_pk_for_user(row),
         }
         container__children__map = Map(
-            desks_all=lambda table, **_: desks_for_persons(table.get_visible_rows()),
-            desks_marked=lambda table, **_: desks_for_persons(table.rows),
+            desks_all=lambda table, **_: desks_for_users(table.get_visible_rows()),
+            desks_marked=lambda table, **_: desks_for_users(table.rows),
             after=LAST,
         )
 
@@ -106,6 +113,7 @@ class UserTable(Table):
         filter__include=True,
         filter__freetext=True,
     )
+    office = Column.from_model(model_field=User.office.field, filter__include=True)
 
 
 def who(request):
@@ -121,16 +129,6 @@ def me(request):
 def who_details(request, email):
     instance = get_object_or_404(User, email=email)
 
-    def office_post_handler(form, **kwargs):
-        Registration.objects.filter(user=request.user).delete()
-        office = form.fields.office.value
-        if office:
-            Registration.objects.create(
-                user=request.user,
-                office=office,
-            )
-        return HttpResponseRedirect('.')
-
     return Page(
         parts__heading=html.h1(instance.name or instance.email),
         parts__avatar=html.div(
@@ -145,19 +143,21 @@ def who_details(request, email):
             auto__instance=instance,
             auto__include=["email"],
         ),
-        parts__location=Form(
-            actions__submit__post_handler=office_post_handler,
+        parts__location=Form.edit(
+            instance=instance,
             include=lambda request, **_: instance == request.user,
             fields__office=Field.choice_queryset(
                 choices=Office.objects.all(),
-                initial=lambda **_: r.first().office if (r:=instance.registration_set) else None,
             ),
         ),
     )
 
 
-def register(request, email, identifier):
-    pass
+@csrf_exempt
+def report_display(request):
+    display_report = json.loads(request.body)
+    handle_report(display_report)
+    return HttpResponse("OK")
 
 
 class FloorForm(Form):
@@ -240,7 +240,7 @@ class DeskForm(Form):
 
     who = Field(
         display_name=_("who").title(),
-        initial=lambda instance, **_: ", ".join(instance.registration_set.values_list("user__name", flat=True)),
+        initial=lambda instance, **_: ", ".join(instance.display_set.values_list("user__name", flat=True)),
     )
 
 

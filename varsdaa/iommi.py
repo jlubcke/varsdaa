@@ -36,9 +36,11 @@ class MenuItem(iommi.MenuItem):
 
 
 class Menu(iommi.Menu):
+    index = MenuItem(display_name='Tebax', url='/')
     where = MenuItem(display_name="Vars", url="/room/")
     who = MenuItem(display_name="Vem", url="/person/")
-    admin = MenuItem(url="/admin/")
+    admin = MenuItem(url="/admin/", include=lambda request, **_: request.user.is_superuser)
+    logout = MenuItem(url="/admin/logout", include=lambda request, **_: request.user.is_authenticated)
 
 
 class Page(iommi.Page):
@@ -81,12 +83,12 @@ class Field(iommi.Field):
             # language=html
             """ \
                 <div{{ field.attrs }}>
-                {{ field.label }}
-                {{ field.input }}
-                {% if field.value %}
-                <img class="mt-3 mb-3" style="height:100px" src="/floor/{{ field.form.instance.pk }}/image/" />
-                {% endif %}
-                {{ field.help }}
+                    {{ field.label }}
+                    {{ field.input }}
+                    {% if field.value %}
+                    <img class="mt-3 mb-3" style="height:100px" src="/floor/{{ field.form.instance.pk }}/image/" />
+                    {% endif %}
+                    {{ field.help }}
                 {{ field.errors }}
                 </div>
             """,

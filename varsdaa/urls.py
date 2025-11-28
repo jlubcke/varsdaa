@@ -27,4 +27,6 @@ urlpatterns = [
     path("floor/<int:floor_pk>/image/", views.floor_image, name="floor_image"),
 
     path("admin/", include(VarsdaaAdmin.urls())),
+
+    path("report_display/", views.report_display, name="report_display")
 ]

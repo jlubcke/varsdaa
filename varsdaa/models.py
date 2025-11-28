@@ -121,9 +121,10 @@ class Desk(Model):
 
 class Display(Model):
     desk = ForeignKey(to=Desk, on_delete=models.CASCADE, null=True)
+    product_name =CharField(max_length=255)
     serial_number = CharField(max_length=255)
     alphanumeric_serial_number = CharField(max_length=255)
     user = ForeignKey(to=User, on_delete=models.CASCADE, null=True)
-    user_updated_at = DateTimeField()
+    user_updated_at = DateTimeField(null=True)
 
 

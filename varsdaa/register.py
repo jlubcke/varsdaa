@@ -110,20 +110,17 @@ def handle_report(report):
                     product_name=display_report["product_name"],
                 )
 
-            # if display.extra_display:
-            #     continue
-
-            display_identified = True
-
             timestamp = timezone.now()
+            display.user=user
             display.user_updated_at = timestamp
             display.save()
+
             if display.desk:
-                place_user(display.desk, user, timestamp)
-                break
-            # else:
-            #     display.delete()
-            #     response["url"] = register_display_url(display_report, report, request)
+                user.office = display.desk.floor.office
+                user.office_updated_at = timestamp
+                user.save()
+
+            display_identified = True
 
         except Display.DoesNotExist:
             response["url"] = register_display_url(display_report, user)
@@ -132,8 +129,7 @@ def handle_report(report):
 
     if not display_identified:
         try:
-            desk = Desk.objects.get(user=user)
-            display = Display.objects.get(desk=desk)
+            display = Display.objects.get(user=user)
             display.user = None
             display.save()
         except (Desk.DoesNotExist, Display.DoesNotExist):

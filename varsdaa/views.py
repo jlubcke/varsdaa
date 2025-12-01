@@ -4,14 +4,12 @@ from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.template import Template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from iommi import LAST
-from iommi import Asset
 from iommi import html
 from iommi.struct import Struct
 
@@ -166,55 +164,63 @@ def report_display(request):
     return handle_report(display_report)
 
 
-
 def register_display(request, email):
     parts = Struct()
     choose_office_form = AutosubmitForm(
-        fields__office=Field.choice_queryset(attr=None, choices=Office.objects.all(), after=0),
+        fields__office=Field.choice_queryset(choices=Office.objects.all()),
     )
 
     parts.choose_office = choose_office_form
     office = choose_office_form.bind(request=request).fields.office.value
 
     choose_floor_form = AutosubmitForm(
+        editable=bool(office),
         fields__floor=Field.choice_queryset(
-            attr=None,
             choices=office.floor_set.all() if office else Floor.objects.none(),
-            after=0,
         ),
     )
     parts.choose_floor = choose_floor_form
     floor = choose_floor_form.bind(request=request).fields.floor.value
 
+    choose_desk_form = AutosubmitForm(
+        editable=bool(office) & bool(floor),
+        fields__desk=Field.choice_queryset(
+            choices=floor.desk_set.all() if floor else Desk.objects.none(),
+        ),
+        fields__map=Map(
+            after=0,
+            floors_all=[floor] if floor else [],
+            desks_marked=floor.desk_set.all() if floor else [],
+        ),
+    )
+    parts.choose_desk = choose_desk_form
+    desk = choose_desk_form.bind(request=request).fields.desk.value
+
     user = get_object_or_404(User, email=email)
 
     def new_instance(form, **_):
-        desk = form.fields.desk.value
-        if desk:
-            Display.objects.filter(desk=desk).delete()
-        return form.model()
+        display = form.model()
+        display.user=user
+        display.desk=desk
+        return display
 
-    if office and floor:
-        register_display_form = Form.create(
-            title="Register display",
-            auto__model=Display,
-            fields__office=Field.choice_queryset(attr=None, choices=Office.objects.all(), after=0),
-            fields__floor=Field.choice_queryset(attr=None, choices=Floor.objects.all(), after=1),
-            fields__product_name=Field.hidden(),
-            fields__serial_number=Field.hidden(required=False),
-            fields__alphanumeric_serial_number=Field.hidden(required=False),
-            fields__user=Field.hidden(initial=user.pk),
-            fields__user_updated_at=Field.non_rendered(initial=timezone.now()),
-            # fields__extra_display__help_text="This an extra display that is not the main display of the desk",
-            # fields__extra_display__after="desk",
-            # post_validation=post_validation,
-            extra__new_instance=new_instance,
-            # extra__on_save=save_person,
-            extra__redirect=lambda form, **_: HttpResponseRedirect(
-                f"/?user_name={form.fields.user_name.value}",
-            ),
-        )
-        parts.register_display = register_display_form
+    register_display_form = Form.create(
+        editable=bool(office) & bool(floor) & bool(desk),
+        title="Register display",
+        model=Display,
+        fields__product_name=Field(),
+        fields__serial_number=Field(required=False),
+        fields__alphanumeric_serial_number=Field(required=False),
+        fields__user=Field.hidden(initial=user.pk),
+        fields__user_updated_at=Field.non_rendered(initial=timezone.now()),
+        # post_validation=post_validation,
+        extra__new_instance=new_instance,
+        # extra__on_save=save_person,
+        extra__redirect=lambda form, **_: HttpResponseRedirect(
+            f"/?user_name={form.fields.user_name.value}",
+        ),
+    )
+    parts.register_display = register_display_form
 
     return Page(parts=parts)
 

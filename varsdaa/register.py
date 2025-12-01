@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.timezone import now
 from iommi import get_current_request
 
@@ -84,9 +85,7 @@ def handle_report(report):
     display_identified = False
     for display_report in report["displays"]:
         serial_number = display_report.get("serial_number", None)
-        alphanumeric_serial_number = display_report.get(
-            "alphanumeric_serial_number", None
-        )
+        alphanumeric_serial_number = display_report.get("alphanumeric_serial_number", None)
 
         # Hack to be compatible with Windows clients reporting alphanumeric_serial_number as serial_number
         if (
@@ -98,16 +97,18 @@ def handle_report(report):
             alphanumeric_serial_number = serial_number
             del display_report["serial_number"]
 
+        product_name = display_report["product_name"]
+
         try:
             try:
                 display = Display.objects.get(
                     alphanumeric_serial_number=alphanumeric_serial_number,
-                    product_name=display_report["product_name"],
+                    product_name=product_name,
                 )
             except Display.DoesNotExist:
                 display = Display.objects.get(
                     serial_number=serial_number,
-                    product_name=display_report["product_name"],
+                    product_name=product_name,
                 )
 
             timestamp = timezone.now()
@@ -139,19 +140,39 @@ def handle_report(report):
 
 def register_display_url(display_report, user):
     request = get_current_request()
-    pass
+    params = dict(
+        **display_report,
+    )
+    q = urlencode(params)
+    return request.build_absolute_uri(reverse("register_display", kwargs={'email':user.email}) + "?" + q)
+
 
 def place_user(desk, user, timestamp):
     pass
 
-    # return JsonResponse(result)
 
-
-    # for display_report in displays:
-    #     serial_number = display_report.get("serial_number")
-    #     if serial_number:
-    #         serial_numbers.append(serial_number)
-
+# def place_person(desk, person, update_time):
+#     if hasattr(desk, "person"):
+#         last_person = desk.person
+#         last_person.desk = None
+#         last_person.room = None
+#         last_person.office = None
+#         last_person.save()
+#     person.desk = desk
+#     person.room = desk.room
+#     person.office = desk.room.office
+#     person.location_update_time = update_time
+#     person.save()
+#
+#
+# def register_display_url(display_report, report, request):
+#     params = dict(
+#         user_name=report["user_name"],
+#         full_name=report["full_name"],
+#         **display_report,
+#     )
+#     q = urlencode(params)
+#     return request.build_absolute_uri(reverse("register_display") + "?" + q)
 
 def register(user, serial_numbers):
     desk = office = None

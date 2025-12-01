@@ -4,13 +4,18 @@ from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.template import Template
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from iommi import LAST
+from iommi import Asset
 from iommi import html
+from iommi.struct import Struct
 
+from varsdaa.autosubmit_form import AutosubmitForm
 from varsdaa.iommi import Column
 from varsdaa.iommi import Field
 from varsdaa.iommi import Form
@@ -18,6 +23,7 @@ from varsdaa.iommi import Page
 from varsdaa.iommi import Table
 from varsdaa.map import Map
 from varsdaa.models import Desk
+from varsdaa.models import Display
 from varsdaa.models import Floor
 from varsdaa.models import Office
 from varsdaa.models import Room
@@ -35,7 +41,7 @@ def index(request):
                     attrs__href=lambda request, **_: get_adapter()
                     .get_provider(request, "google")
                     .get_login_url(request, next="/person/me/"),
-                )
+                ),
             ),
             html.li(html.a("Admin", attrs__href=reverse("iommi.Admin.all_models"))),
         ),
@@ -140,8 +146,9 @@ def who_details(request, email):
             else None,
         ),
         parts__user=Form(
+            editable=False,
             auto__instance=instance,
-            auto__include=["email"],
+            auto__include=["email", "office", "display_set"],
         ),
         parts__location=Form.edit(
             instance=instance,
@@ -156,8 +163,60 @@ def who_details(request, email):
 @csrf_exempt
 def report_display(request):
     display_report = json.loads(request.body)
-    handle_report(display_report)
-    return HttpResponse("OK")
+    return handle_report(display_report)
+
+
+
+def register_display(request, email):
+    parts = Struct()
+    choose_office_form = AutosubmitForm(
+        fields__office=Field.choice_queryset(attr=None, choices=Office.objects.all(), after=0),
+    )
+
+    parts.choose_office = choose_office_form
+    office = choose_office_form.bind(request=request).fields.office.value
+
+    choose_floor_form = AutosubmitForm(
+        fields__floor=Field.choice_queryset(
+            attr=None,
+            choices=office.floor_set.all() if office else Floor.objects.none(),
+            after=0,
+        ),
+    )
+    parts.choose_floor = choose_floor_form
+    floor = choose_floor_form.bind(request=request).fields.floor.value
+
+    user = get_object_or_404(User, email=email)
+
+    def new_instance(form, **_):
+        desk = form.fields.desk.value
+        if desk:
+            Display.objects.filter(desk=desk).delete()
+        return form.model()
+
+    if office and floor:
+        register_display_form = Form.create(
+            title="Register display",
+            auto__model=Display,
+            fields__office=Field.choice_queryset(attr=None, choices=Office.objects.all(), after=0),
+            fields__floor=Field.choice_queryset(attr=None, choices=Floor.objects.all(), after=1),
+            fields__product_name=Field.hidden(),
+            fields__serial_number=Field.hidden(required=False),
+            fields__alphanumeric_serial_number=Field.hidden(required=False),
+            fields__user=Field.hidden(initial=user.pk),
+            fields__user_updated_at=Field.non_rendered(initial=timezone.now()),
+            # fields__extra_display__help_text="This an extra display that is not the main display of the desk",
+            # fields__extra_display__after="desk",
+            # post_validation=post_validation,
+            extra__new_instance=new_instance,
+            # extra__on_save=save_person,
+            extra__redirect=lambda form, **_: HttpResponseRedirect(
+                f"/?user_name={form.fields.user_name.value}",
+            ),
+        )
+        parts.register_display = register_display_form
+
+    return Page(parts=parts)
 
 
 class FloorForm(Form):

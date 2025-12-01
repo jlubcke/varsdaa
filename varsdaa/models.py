@@ -127,4 +127,6 @@ class Display(Model):
     user = ForeignKey(to=User, on_delete=models.CASCADE, null=True)
     user_updated_at = DateTimeField(null=True)
 
+    def __str__(self):
+        return f"{self.product_name}: {self.serial_number}"
 

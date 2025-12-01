@@ -7,8 +7,7 @@ from varsdaa.iommi import Form
 # language=javascript
 AUTO_SUBMIT_JS = \
     """
-    window.addEventListener('iommi.init.start', function (event) {
-        console.log(event);
+    window.addEventListener('DOMContentLoaded', function (event) {
         document.querySelectorAll('.iommi_auto_submit').forEach(
             form => autoSubmitForm(form)
         );
@@ -17,7 +16,7 @@ AUTO_SUBMIT_JS = \
     function autoSubmitForm(form) {
         form.setAttribute('autocomplete', 'off');
 
-        const debouncedPopulate = window.iommi.debounce(window.iommi.queryPopulate, 400);
+        const debouncedSubmitForm = window.iommi.debounce(submitForm, 400);
 
         let prevData = new FormData(form);
         const onChange = e => {
@@ -39,7 +38,7 @@ AUTO_SUBMIT_JS = \
                     return;
                 }
                 // delay ajax request for free text
-                window.iommi.debouncedPopulate(form, e.target);
+                debouncedSubmitForm(form);
             } else {
                 // select2 elements have hidden inputs when they update GUI should respond immediately
                 // same goes for checkboxes

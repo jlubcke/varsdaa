@@ -4,13 +4,15 @@ from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.template import Template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from iommi import LAST
+from iommi import LAST, Asset
 from iommi import html
+from iommi.form import choice_queryset__parse
 from iommi.struct import Struct
 
 from varsdaa.autosubmit_form import AutosubmitForm
@@ -184,13 +186,36 @@ def register_display(request, email):
 
     choose_desk_form = AutosubmitForm(
         editable=bool(office) & bool(floor),
-        fields__desk=Field.choice_queryset(
+        fields__desk=Field.choice_searchable(
+            required=False,
+            model=Desk,
+            parse=choice_queryset__parse,
+            choice_id_formatter=lambda choice, **_: choice.pk,
             choices=floor.desk_set.all() if floor else Desk.objects.none(),
         ),
         fields__map=Map(
             after=0,
             floors_all=[floor] if floor else [],
             desks_marked=floor.desk_set.all() if floor else [],
+        ),
+        assets__select=Asset.js(
+            Template(
+                # language=javascript
+                """
+                    window.addEventListener('DOMContentLoaded', function (event) {
+                        document.querySelectorAll('.desk').forEach(
+                            desk => setupSelect(desk)
+                        );
+                    });
+                    function setupSelect(desk) {
+                        desk.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            var pk = desk.getAttribute('data-desk');
+                            $('#id_desk').val(pk).trigger('change');
+                        });
+                    }
+                """
+            )
         ),
     )
     parts.choose_desk = choose_desk_form
@@ -202,23 +227,18 @@ def register_display(request, email):
         display = form.model()
         display.user=user
         display.desk=desk
+        display.user_updated_at=timezone.now()
         return display
 
     register_display_form = Form.create(
-        editable=bool(office) & bool(floor) & bool(desk),
+        actions__submit__include=bool(office) & bool(floor) & bool(desk),
         title="Register display",
         model=Display,
         fields__product_name=Field(),
         fields__serial_number=Field(required=False),
         fields__alphanumeric_serial_number=Field(required=False),
-        fields__user=Field.hidden(initial=user.pk),
-        fields__user_updated_at=Field.non_rendered(initial=timezone.now()),
-        # post_validation=post_validation,
         extra__new_instance=new_instance,
-        # extra__on_save=save_person,
-        extra__redirect=lambda form, **_: HttpResponseRedirect(
-            f"/?user_name={form.fields.user_name.value}",
-        ),
+        extra__redirect=lambda form, **_: HttpResponseRedirect(user.get_absolute_url()),
     )
     parts.register_display = register_display_form
 

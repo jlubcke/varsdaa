@@ -2,6 +2,7 @@ import iommi
 from django.template import Template
 from django.utils.html import format_html
 from iommi import Asset
+from iommi.admin import Messages
 from iommi.shortcut import with_defaults
 
 from varsdaa.models import Desk
@@ -70,6 +71,7 @@ class Page(iommi.Page):
         )
 
     menu = Menu()
+    messages = Messages()
 
 
 class Form(iommi.Form):

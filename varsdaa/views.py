@@ -133,29 +133,39 @@ def me(request):
 
 
 def who_details(request, email):
-    instance = get_object_or_404(User, email=email)
+    user = get_object_or_404(User, email=email)
+
+    def on_save(instance, **_):
+        instance.display_set.set([])
 
     return Page(
-        parts__heading=html.h1(instance.name or instance.email),
+        parts__heading=html.h1(user.name or user.email),
         parts__avatar=html.div(
             lambda **_: format_html(
                 '<img src="{}" />',
                 s.get_avatar_url(),
             )
-            if (s := instance.socialaccount_set.first()) is not None
+            if (s := user.socialaccount_set.first()) is not None
             else None,
         ),
         parts__user=Form(
             editable=False,
-            auto__instance=instance,
+            auto__instance=user,
             auto__include=["email", "office", "display_set"],
+            fields__map=Map(
+                after=LAST,
+                desks_all=lambda **_: desks_for_users([user]),
+                desks_marked=lambda **_: desks_for_users([user]),
+            )
         ),
         parts__location=Form.edit(
-            instance=instance,
-            include=lambda request, **_: instance == request.user,
+            instance=user,
+            include=lambda request, **_: request.user == user,
             fields__office=Field.choice_queryset(
                 choices=Office.objects.all(),
             ),
+            extra__on_save=on_save,
+            extra__redirect_to='.',
         ),
     )
 
@@ -223,12 +233,13 @@ def register_display(request, email):
 
     user = get_object_or_404(User, email=email)
 
-    def new_instance(form, **_):
-        display = form.model()
+    def pre_save(instance, **_):
+        display = instance
         display.user=user
         display.desk=desk
         display.user_updated_at=timezone.now()
-        return display
+        user.office = office
+        user.save()
 
     register_display_form = Form.create(
         actions__submit__include=bool(office) & bool(floor) & bool(desk),
@@ -237,7 +248,7 @@ def register_display(request, email):
         fields__product_name=Field(),
         fields__serial_number=Field(required=False),
         fields__alphanumeric_serial_number=Field(required=False),
-        extra__new_instance=new_instance,
+        extra__pre_save=pre_save,
         extra__redirect=lambda form, **_: HttpResponseRedirect(user.get_absolute_url()),
     )
     parts.register_display = register_display_form

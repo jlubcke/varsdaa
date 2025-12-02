@@ -26,3 +26,21 @@ varsdaa = "varsdaa"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "varsdaa.test.settings"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = [
+]
+select = [
+    "E",
+    "F",
+    "I",
+    "N",
+    "W",
+    "UP",
+]
+
+[tool.ruff.format]
+quote-style = "preserve"

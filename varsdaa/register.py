@@ -6,8 +6,7 @@ from django.utils.http import urlencode
 from django.utils.timezone import now
 from iommi import get_current_request
 
-from varsdaa.models import Display, Desk
-from varsdaa.models import User
+from varsdaa.models import Desk, Display, User
 
 # def report_display(request):
 #     response = dict()
@@ -80,7 +79,7 @@ def handle_report(report):
     full_name = report.get("full_name")
     user = get_object_or_404(User, name=full_name)
 
-    response ={}
+    response = {}
 
     display_identified = False
     for display_report in report["displays"]:
@@ -88,11 +87,7 @@ def handle_report(report):
         alphanumeric_serial_number = display_report.get("alphanumeric_serial_number", None)
 
         # Hack to be compatible with Windows clients reporting alphanumeric_serial_number as serial_number
-        if (
-            not alphanumeric_serial_number
-            and serial_number
-            and not serial_number.isdigit()
-        ):
+        if not alphanumeric_serial_number and serial_number and not serial_number.isdigit():
             display_report["alphanumeric_serial_number"] = serial_number
             alphanumeric_serial_number = serial_number
             del display_report["serial_number"]
@@ -112,7 +107,7 @@ def handle_report(report):
                 )
 
             timestamp = timezone.now()
-            display.user=user
+            display.user = user
             display.user_updated_at = timestamp
             display.save()
 
@@ -138,13 +133,14 @@ def handle_report(report):
 
     return JsonResponse(data=response)
 
+
 def register_display_url(display_report, user):
     request = get_current_request()
     params = dict(
         **display_report,
     )
     q = urlencode(params)
-    return request.build_absolute_uri(reverse("register_display", kwargs={'email':user.email}) + "?" + q)
+    return request.build_absolute_uri(reverse("register_display", kwargs={'email': user.email}) + "?" + q)
 
 
 def place_user(desk, user, timestamp):
@@ -174,6 +170,7 @@ def place_user(desk, user, timestamp):
 #     q = urlencode(params)
 #     return request.build_absolute_uri(reverse("register_display") + "?" + q)
 
+
 def register(user, serial_numbers):
     desk = office = None
     if serial_numbers:
@@ -183,7 +180,7 @@ def register(user, serial_numbers):
 
     if desk:
         desk.user = user
-        desk.user_updated_at=now()
+        desk.user_updated_at = now()
         desk.save(updated_fields=['user', 'timestamp'])
 
         office = desk.floor.office
@@ -198,9 +195,9 @@ def register(user, serial_numbers):
         "url": reverse("who_details", kwargs={"email": user.email}),
     }
 
+
 def guess_desk(serial_numbers):
     display = Display.objects.filter(serial_number__in=serial_numbers).first()
     if display is not None:
         return display.desk
     return None
-

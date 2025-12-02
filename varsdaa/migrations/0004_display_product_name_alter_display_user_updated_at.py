@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('varsdaa', '0003_user_office_user_office_updated_at_display_and_more'),
     ]

@@ -1,4 +1,3 @@
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -52,4 +51,4 @@ DATABASES = {
 }
 
 ROOT_URLCONF = 'varsdaa.urls'
-SECRET_KEY='not to secret key for testing'
+SECRET_KEY = 'not to secret key for testing'

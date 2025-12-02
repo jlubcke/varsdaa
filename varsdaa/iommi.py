@@ -5,8 +5,7 @@ from iommi import Asset
 from iommi.admin import Messages
 from iommi.shortcut import with_defaults
 
-from varsdaa.models import Desk
-from varsdaa.models import Room
+from varsdaa.models import Desk, Room
 
 
 class Table(iommi.Table):

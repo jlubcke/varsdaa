@@ -1,8 +1,7 @@
 import json
 
 from allauth.socialaccount.adapter import get_adapter
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template import Template
 from django.urls import reverse
@@ -10,24 +9,14 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from iommi import LAST, Asset
-from iommi import html
+from iommi import LAST, Asset, html
 from iommi.form import choice_queryset__parse
 from iommi.struct import Struct
 
 from varsdaa.autosubmit_form import AutosubmitForm
-from varsdaa.iommi import Column
-from varsdaa.iommi import Field
-from varsdaa.iommi import Form
-from varsdaa.iommi import Page
-from varsdaa.iommi import Table
+from varsdaa.iommi import Column, Field, Form, Page, Table
 from varsdaa.map import Map
-from varsdaa.models import Desk
-from varsdaa.models import Display
-from varsdaa.models import Floor
-from varsdaa.models import Office
-from varsdaa.models import Room
-from varsdaa.models import User
+from varsdaa.models import Desk, Display, Floor, Office, Room, User
 from varsdaa.register import handle_report
 
 
@@ -156,7 +145,7 @@ def who_details(request, email):
                 after=LAST,
                 desks_all=lambda **_: desks_for_users([user]),
                 desks_marked=lambda **_: desks_for_users([user]),
-            )
+            ),
         ),
         parts__location=Form.edit(
             instance=user,
@@ -235,9 +224,9 @@ def register_display(request, email):
 
     def pre_save(instance, **_):
         display = instance
-        display.user=user
-        display.desk=desk
-        display.user_updated_at=timezone.now()
+        display.user = user
+        display.desk = desk
+        display.user_updated_at = timezone.now()
         user.office = office
         user.save()
 

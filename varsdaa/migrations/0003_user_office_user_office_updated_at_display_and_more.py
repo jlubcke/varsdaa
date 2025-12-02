@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('varsdaa', '0002_alter_user_managers_alter_registration_desk'),
     ]
@@ -30,7 +29,12 @@ class Migration(migrations.Migration):
                 ('alphanumeric_serial_number', models.CharField(max_length=255)),
                 ('user_updated_at', models.DateTimeField()),
                 ('desk', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='varsdaa.desk')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    'user',
+                    models.ForeignKey(
+                        null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+                    ),
+                ),
             ],
         ),
         migrations.DeleteModel(

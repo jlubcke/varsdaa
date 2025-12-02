@@ -1,5 +1,4 @@
-from iommi import Asset
-from iommi import Style
+from iommi import Asset, Style
 from iommi.style_bootstrap5 import bootstrap5
 
 varsdaa_style = Style(

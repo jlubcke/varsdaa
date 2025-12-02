@@ -7,6 +7,7 @@ class VarsdaaConfig(AppConfig):
 
     def ready(self):
         from iommi import register_style
+
         from varsdaa.style import varsdaa_style
 
         register_style('varsdaa_style', varsdaa_style)

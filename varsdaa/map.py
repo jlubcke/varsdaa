@@ -3,9 +3,7 @@ from collections.abc import Iterable
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
-from iommi import Asset
-from iommi import Fragment
-from iommi import html
+from iommi import Asset, Fragment, html
 from iommi.declarative.namespace import Namespace
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.evaluate import evaluate_strict
@@ -13,14 +11,10 @@ from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from iommi.table import params_of_request
 
-from varsdaa.models import Desk
-from varsdaa.models import Floor
-from varsdaa.models import Room
+from varsdaa.models import Desk, Floor, Room
 
 
-@with_defaults(
-    floors_all=lambda **_: Floor.objects.all().order_by("-display_name")
-)
+@with_defaults(floors_all=lambda **_: Floor.objects.all().order_by("-display_name"))
 class Map(Fragment):
     class Meta:
         assets__map_js = Asset.js(children__content__template="js/map.js")

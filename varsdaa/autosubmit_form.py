@@ -3,10 +3,8 @@ from iommi import Asset
 
 from varsdaa.iommi import Form
 
-
 # language=javascript
-AUTO_SUBMIT_JS = \
-    """
+AUTO_SUBMIT_JS = """
     window.addEventListener('DOMContentLoaded', function (event) {
         document.querySelectorAll('.iommi_auto_submit').forEach(
             form => autoSubmitForm(form)
@@ -94,12 +92,13 @@ AUTO_SUBMIT_JS = \
     }
     """
 
+
 class AutosubmitForm(Form):
     class Meta:
-        attrs__method="GET"
-        attrs__class__iommi_auto_submit=True
-        actions__submit=dict(
+        attrs__method = "GET"
+        attrs__class__iommi_auto_submit = True
+        actions__submit = dict(
             include=True,
             attrs={"data-iommi-submit-button": ""},
         )
-        assets__auto_submit=Asset.js(Template(AUTO_SUBMIT_JS))
+        assets__auto_submit = Asset.js(Template(AUTO_SUBMIT_JS))

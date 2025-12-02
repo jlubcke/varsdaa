@@ -10,6 +10,7 @@ def fail(x):
 
 class VarsdaaAdmin(Admin):
     menu = Menu()
+
     class Meta:
         apps__auth_user__include = False
         apps__auth_group__include = False

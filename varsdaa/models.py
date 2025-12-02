@@ -2,13 +2,7 @@ from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import BinaryField
-from django.db.models import CharField
-from django.db.models import DateTimeField
-from django.db.models import EmailField
-from django.db.models import ForeignKey
-from django.db.models import IntegerField
-from django.db.models import Model
+from django.db.models import BinaryField, CharField, DateTimeField, EmailField, ForeignKey, IntegerField, Model
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -121,7 +115,7 @@ class Desk(Model):
 
 class Display(Model):
     desk = ForeignKey(to=Desk, on_delete=models.CASCADE, null=True)
-    product_name =CharField(max_length=255)
+    product_name = CharField(max_length=255)
     serial_number = CharField(max_length=255)
     alphanumeric_serial_number = CharField(max_length=255)
     user = ForeignKey(to=User, on_delete=models.CASCADE, null=True)
@@ -129,4 +123,3 @@ class Display(Model):
 
     def __str__(self):
         return f"{self.product_name}: {self.serial_number}"
-

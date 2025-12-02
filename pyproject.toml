@@ -32,7 +32,9 @@ line-length = 120
 
 [tool.ruff.lint]
 ignore = [
+    "E501",  # Line too long
 ]
+
 select = [
     "E",
     "F",

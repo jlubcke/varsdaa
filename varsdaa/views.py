@@ -1,29 +1,20 @@
-import json
-
 from allauth.socialaccount.adapter import get_adapter
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.template import Template
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.csrf import csrf_exempt
-from iommi import LAST, Asset, html
-from iommi.form import choice_queryset__parse
-from iommi.struct import Struct
+from iommi import LAST, html
 
-from varsdaa.autosubmit_form import AutosubmitForm
 from varsdaa.iommi import Column, Field, Form, Page, Table
 from varsdaa.map import Map
-from varsdaa.models import Desk, Display, Floor, Office, Room, User
-from varsdaa.register import handle_report
+from varsdaa.models import Desk, Floor, Office, Room, User
 
 
 def index(request):
     return Page(
-        parts__headin=html.h1("Varsdå?"),
-        parts__choices=html.ul(
+        parts__heading=html.h1("Varsdå?"),
+        parts__items=html.ul(
             html.li(
                 html.a(
                     "Login",
@@ -125,6 +116,7 @@ def who_details(request, email):
     user = get_object_or_404(User, email=email)
 
     def on_save(instance, **_):
+        # Clear all previously connected displays
         instance.display_set.set([])
 
     return Page(
@@ -157,92 +149,6 @@ def who_details(request, email):
             extra__redirect_to='.',
         ),
     )
-
-
-@csrf_exempt
-def report_display(request):
-    display_report = json.loads(request.body)
-    return handle_report(display_report)
-
-
-def register_display(request, email):
-    parts = Struct()
-    choose_office_form = AutosubmitForm(
-        fields__office=Field.choice_queryset(choices=Office.objects.all()),
-    )
-
-    parts.choose_office = choose_office_form
-    office = choose_office_form.bind(request=request).fields.office.value
-
-    choose_floor_form = AutosubmitForm(
-        editable=bool(office),
-        fields__floor=Field.choice_queryset(
-            choices=office.floor_set.all() if office else Floor.objects.none(),
-        ),
-    )
-    parts.choose_floor = choose_floor_form
-    floor = choose_floor_form.bind(request=request).fields.floor.value
-
-    choose_desk_form = AutosubmitForm(
-        editable=bool(office) & bool(floor),
-        fields__desk=Field.choice_searchable(
-            required=False,
-            model=Desk,
-            parse=choice_queryset__parse,
-            choice_id_formatter=lambda choice, **_: choice.pk,
-            choices=floor.desk_set.all() if floor else Desk.objects.none(),
-        ),
-        fields__map=Map(
-            after=0,
-            floors_all=[floor] if floor else [],
-            desks_marked=floor.desk_set.all() if floor else [],
-        ),
-        assets__select=Asset.js(
-            Template(
-                # language=javascript
-                """
-                    window.addEventListener('DOMContentLoaded', function (event) {
-                        document.querySelectorAll('.desk').forEach(
-                            desk => setupSelect(desk)
-                        );
-                    });
-                    function setupSelect(desk) {
-                        desk.addEventListener('click', (event) => {
-                            event.preventDefault();
-                            var pk = desk.getAttribute('data-desk');
-                            $('#id_desk').val(pk).trigger('change');
-                        });
-                    }
-                """
-            )
-        ),
-    )
-    parts.choose_desk = choose_desk_form
-    desk = choose_desk_form.bind(request=request).fields.desk.value
-
-    user = get_object_or_404(User, email=email)
-
-    def pre_save(instance, **_):
-        display = instance
-        display.user = user
-        display.desk = desk
-        display.user_updated_at = timezone.now()
-        user.office = office
-        user.save()
-
-    register_display_form = Form.create(
-        actions__submit__include=bool(office) & bool(floor) & bool(desk),
-        title="Register display",
-        model=Display,
-        fields__product_name=Field(),
-        fields__serial_number=Field(required=False),
-        fields__alphanumeric_serial_number=Field(required=False),
-        extra__pre_save=pre_save,
-        extra__redirect=lambda form, **_: HttpResponseRedirect(user.get_absolute_url()),
-    )
-    parts.register_display = register_display_form
-
-    return Page(parts=parts)
 
 
 class FloorForm(Form):

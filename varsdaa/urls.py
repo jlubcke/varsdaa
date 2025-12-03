@@ -1,6 +1,7 @@
 from django.urls import include, path
 
 import varsdaa.views as views
+from varsdaa import register
 from varsdaa.admin import VarsdaaAdmin
 from varsdaa.views import DeskShow, EditFloor, EditRoom, ListFloor, ShowFloor, ShowRoom
 
@@ -12,12 +13,12 @@ urlpatterns = [
     path("person/", views.who, name="who"),
     path("person/me/", views.me, name="me"),
     path("person/<email>/", views.who_details, name="who_details"),
-    path("person/<email>/register_display", views.register_display, name="register_display"),
+    path("person/<email>/register_display", register.register_display, name="register_display"),
     path("desk/<int:desk_pk>/", DeskShow().as_view(), name="desk_show"),
     path("floor/", ListFloor().as_view(), name="floor_list"),
     path("floor/<int:floor_pk>/", ShowFloor().as_view(), name="floor_edit"),
     path("floor/<int:floor_pk>/edit/", EditFloor().as_view(), name="floor_edit"),
     path("floor/<int:floor_pk>/image/", views.floor_image, name="floor_image"),
     path("admin/", include(VarsdaaAdmin.urls())),
-    path("report_display/", views.report_display, name="report_display"),
+    path("report_display/", register.report_display, name="report_display"),
 ]

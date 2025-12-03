@@ -52,3 +52,4 @@ DATABASES = {
 
 ROOT_URLCONF = 'varsdaa.urls'
 SECRET_KEY = 'not to secret key for testing'
+STATIC_URL = '/static/'

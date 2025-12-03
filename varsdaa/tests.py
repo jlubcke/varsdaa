@@ -65,7 +65,7 @@ def test_register(client, user, payload, existing_display):
     user.refresh_from_db()
     assert user.display_set.count() == 1
     assert user.office == existing_display.desk.floor.office
-
+    Display.objects.all().delete()
 
 def test_register_new(client, user, payload):
     result = client.post(
@@ -74,9 +74,16 @@ def test_register_new(client, user, payload):
         content_type="application/json",
     )
     assert result.status_code == 200
-    assert result.json()['url'].endswith(
+    url = result.json()['url']
+    assert url.endswith(
         'person/putte@fisk.com/register_display'
         '?product_name=DELL+P3223QE'
         '&serial_number=892416844'
         '&alphanumeric_serial_number=8Y064P3'
     )
+    result = client.get(url)
+    assert result.status_code==200
+    form = result.context['root'].parts.register_display
+    result = client.post(url, data={})
+    print(result.content.decode())
+

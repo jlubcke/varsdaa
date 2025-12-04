@@ -67,7 +67,8 @@ def test_register(client, user, payload, existing_display):
     assert user.office == existing_display.desk.floor.office
     Display.objects.all().delete()
 
-def test_register_new(client, user, payload):
+
+def test_register_new(client, user, payload, desk):
     result = client.post(
         reverse("report_display"),
         json.dumps(payload),
@@ -81,9 +82,23 @@ def test_register_new(client, user, payload):
         '&serial_number=892416844'
         '&alphanumeric_serial_number=8Y064P3'
     )
+    url += f'&office={desk.floor.office.pk}&floor={desk.floor.pk}&desk={desk.pk}'
     result = client.get(url)
-    assert result.status_code==200
-    form = result.context['root'].parts.register_display
-    result = client.post(url, data={})
-    print(result.content.decode())
+    assert result.status_code == 200
 
+    form = result.context['root'].parts.register_display
+    client.post(
+        url,
+        {
+            'office': desk.floor.office.pk,
+            'floor': desk.floor.pk,
+            'desk': desk.pk,
+            form.actions.submit.own_target_marker(): '',
+            **payload['displays'][0],
+        },
+    )
+    user.refresh_from_db()
+    assert user.display_set.count() == 1
+    assert user.office == desk.floor.office
+
+    Display.objects.all().delete()

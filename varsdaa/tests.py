@@ -2,6 +2,7 @@ import json
 
 import pytest
 from django.urls import reverse
+from django.utils.http import urlencode
 
 from varsdaa.models import Desk, Display, Floor, Office, User
 
@@ -75,28 +76,46 @@ def test_register_new(client, user, payload, desk):
         content_type="application/json",
     )
     assert result.status_code == 200
+
     url = result.json()['url']
+    display_payload = payload['displays'][0]
     assert url.endswith(
-        'person/putte@fisk.com/register_display'
-        '?product_name=DELL+P3223QE'
-        '&serial_number=892416844'
-        '&alphanumeric_serial_number=8Y064P3'
+        reverse(
+            'register_display',
+            kwargs=dict(email=user.email),
+            query=display_payload,
+        ),
     )
-    url += f'&office={desk.floor.office.pk}&floor={desk.floor.pk}&desk={desk.pk}'
-    result = client.get(url)
+
+    # Load register_display form
+    result = client.get(
+        url
+        + '&'
+        + urlencode(
+            dict(
+                office=desk.floor.office.pk,
+                floor=desk.floor.pk,
+                desk=desk.pk,
+            )
+        )
+    )
     assert result.status_code == 200
 
+    # Submit form
     form = result.context['root'].parts.register_display
-    client.post(
+    result = client.post(
         url,
         {
+            form.actions.submit.own_target_marker(): '',
             'office': desk.floor.office.pk,
             'floor': desk.floor.pk,
             'desk': desk.pk,
-            form.actions.submit.own_target_marker(): '',
-            **payload['displays'][0],
+            **display_payload,
         },
     )
+    assert result.status_code == 302
+
+    # Validate placement
     user.refresh_from_db()
     assert user.display_set.count() == 1
     assert user.office == desk.floor.office

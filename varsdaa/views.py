@@ -231,7 +231,15 @@ class DeskForm(Form):
 
     who = Field(
         display_name=_("who").title(),
-        initial=lambda instance, **_: ", ".join(instance.display_set.values_list("user__name", flat=True)),
+        initial=lambda instance, **_: ", ".join(
+            filter(
+                None,
+                instance.display_set.values_list(
+                    "user__name",
+                    flat=True,
+                ),
+            )
+        ),
     )
 
 

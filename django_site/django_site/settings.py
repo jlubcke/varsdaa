@@ -62,7 +62,7 @@ MIDDLEWARE = [
     'iommi.middleware',
 ]
 
-ROOT_URLCONF = 'example.urls'
+ROOT_URLCONF = 'django_site.urls'
 
 TEMPLATES = [
     {
@@ -79,7 +79,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'example.wsgi.application'
+WSGI_APPLICATION = 'django_site.wsgi.application'
 
 
 # Database

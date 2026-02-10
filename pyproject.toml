@@ -26,13 +26,19 @@ varsdaa = "varsdaa"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "varsdaa.test.settings"
+testpaths = ["varsdaa"]
+python_files = [
+    "tests.py",
+    "test_*.py",
+    "*_test.py",
+]
 
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
 ignore = [
-    "E501",  # Line too long
+    "E501", # Line too long
 ]
 
 select = [

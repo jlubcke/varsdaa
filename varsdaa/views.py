@@ -88,16 +88,16 @@ class UserTable(Table):
         cell__value=lambda row, **_: s.get_avatar_url() if (s := row.socialaccount_set.first()) is not None else None,
         cell__format=lambda value, **_: format_html('<img src="{}" />', value) if value else "",
     )
+    name = Column.from_model(
+        model_field=User.name.field,
+        filter__include=True,
+        filter__freetext=True,
+    )
     email = Column.from_model(
         model_field=User.email.field,
         filter__include=True,
         filter__freetext=True,
         cell__url=lambda row, **_: row.get_absolute_url(),
-    )
-    name = Column.from_model(
-        model_field=User.name.field,
-        filter__include=True,
-        filter__freetext=True,
     )
     office = Column.from_model(model_field=User.office.field, filter__include=True)
 

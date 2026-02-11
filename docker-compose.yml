@@ -1,0 +1,46 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "1"
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - .:/app
+      - sqlite_data:/data
+    ports:
+      - "8000:8000"
+    command: ["python", "django_site/manage.py", "runserver", "0.0.0.0:8000"]
+
+  web-prod:
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "0"
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: "change-me"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      DJANGO_COLLECTSTATIC: "1"
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - sqlite_data:/data
+    ports:
+      - "8001:8000"
+
+  test:
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "1"
+    environment:
+      DJANGO_SETTINGS_MODULE: varsdaa.test.settings
+    volumes:
+      - .:/app
+    command: ["pytest", "-q"]
+
+volumes:
+  sqlite_data:

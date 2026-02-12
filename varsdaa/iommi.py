@@ -1,5 +1,6 @@
 import iommi
 from django.template import Template
+from django.templatetags.static import static
 from django.utils.html import format_html
 from iommi import Asset
 from iommi.admin import Messages
@@ -45,6 +46,7 @@ class Menu(iommi.Menu):
 
 class Page(iommi.Page):
     class Meta:
+        assets__base_style = Asset.css(attrs__href=lambda **_: static('css/base.css'))
         assets__style = Asset.css(
             # language=css
             """

@@ -6,10 +6,10 @@ class VarsdaaConfig(AppConfig):
     name = 'varsdaa'
 
     def ready(self):
-        from iommi import register_style
-        from iommi import register_search_fields
-        from varsdaa.style import varsdaa_style
+        from iommi import register_search_fields, register_style
+
         from varsdaa.models import User
+        from varsdaa.style import varsdaa_style
 
         register_style('varsdaa_style', varsdaa_style)
 

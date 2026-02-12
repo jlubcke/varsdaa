@@ -2,6 +2,7 @@ from collections.abc import Iterable
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.templatetags.static import static
 from django.utils.html import format_html
 from iommi import Asset, Fragment, html
 from iommi.declarative.namespace import Namespace
@@ -17,7 +18,7 @@ from varsdaa.models import Desk, Floor, Room
 @with_defaults(floors_all=lambda **_: Floor.objects.all().order_by("-display_name"))
 class Map(Fragment):
     class Meta:
-        assets__map_js = Asset.js(children__content__template="js/map.js")
+        assets__map_js = Asset.js(attrs__src=lambda **_: static("js/map.js"))
 
         svg__attrs = {
             "xmlns": "http://www.w3.org/2000/svg",
